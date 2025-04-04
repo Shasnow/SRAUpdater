@@ -24,7 +24,6 @@ from rich.console import Console
 import argparse
 from rich.panel import Panel
 from rich.style import Style
-import art
 import sys
 import zipfile
 from typing import Generator
@@ -57,7 +56,8 @@ class SRAUpdater:
         self.verify_ssl = True
         set_exechook()
 
-    def __auto_headers(self, url: str) -> dict[str, str]:
+    @staticmethod
+    def __auto_headers(url: str) -> dict[str, str]:
         """
         自动生成请求头。
         """
@@ -84,7 +84,7 @@ class SRAUpdater:
         """
         打印启动logo。
         """
-        self.console.print(art.text2art("SRAUpdater", font="big"), style=Style(color="magenta"))
+        # self.console.print(art.text2art("SRAUpdater", font="big"), style=Style(color="magenta"))
         self.console.print(f"[bold yellow]SRAUpdater {__VERSION__}[/bold yellow]")
         self.console.print(f"[bold blue]作者：({' '.join(__AUTHOR__)})[/bold blue]")
         self.console.print(f"[bold grey]{'=' * self.console.width}")
@@ -103,7 +103,8 @@ class SRAUpdater:
         except Exception as e:
             self.__error_occurred("初始化版本信息", e, need_exit=True)
 
-    def get_current_version(self) -> VersionInfo:
+    @staticmethod
+    def get_current_version() -> VersionInfo:
         """
         获取当前版本信息。
         """
@@ -143,6 +144,7 @@ class SRAUpdater:
             version_info = response.json()
         except requests.RequestException as e:
             self.__error_occurred("获取版本信息", e, need_exit=True)
+            return ""
 
         remote_version = version_info.get("version")
         remote_resource_version = version_info.get("resource_version")
@@ -161,7 +163,7 @@ class SRAUpdater:
         if remote_resource_version > v.resource_version:
             self.logger.info(f"发现资源更新：{remote_resource_version}")
             self.console.print(f"[bold green]发现资源更新：{remote_resource_version}[/bold green]")
-            self.console.print(f"[bold blue]更新说明：\n{version_info.get("resource_announcement")}[/bold blue]")
+            self.console.print(f"[bold blue]更新说明：\n{version_info.get('resource_announcement')}[/bold blue]")
             return ""
         if new_announcement != v.announcement:
             self.update_announcement(new_announcement)
@@ -169,7 +171,8 @@ class SRAUpdater:
         self.console.print("[bold green]已经是最新版本[/bold green]")
         return ""
 
-    def update_announcement(self, new_announcement: str):
+    @staticmethod
+    def update_announcement(new_announcement: str):
         """
         更新公告信息。
         """
@@ -259,6 +262,7 @@ class SRAUpdater:
             ## self.logger.debug(saved_hashes)
         except requests.RequestException as e:
             self.__error_occurred("获取哈希值", e, need_exit=True)
+            return
 
         inconsistent_files = []
         for file_path, saved_hash in saved_hashes.items():
@@ -317,7 +321,7 @@ class SRAUpdater:
         panel = Panel(f"{panel_msg}", style=Style(color="green"), title="[bold yellow]版本信息[bold yellow]")
         self.console.print(panel)
 
-    def simple_download(self, url: str, path: str):
+    def simple_download(self, url: str, path: str|Path):
         """
         简单下载文件。
         """
