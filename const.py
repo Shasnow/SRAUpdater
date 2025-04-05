@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-__VERSION__ = "v0.1.1-bug-fixed"
+__VERSION__ = "v3.0.0-bug-fixed"
 """ 当前版本号 """
 __AUTHOR__ = ["Shasdow", "Fuxuan-CN"]
 """ 作者 """
@@ -18,7 +18,7 @@ HEADERS: dict[str, str] = {
     "Accept-Language": "zh-CN,zh;q=0.8,en;q=0.6"
 }
 """ 请求头 """
-APP_PATH: Path = Path(sys.executable).parent.absolute() if FROZEN else Path(__file__).parent.parent.absolute()
+APP_PATH: Path = Path(sys.executable).parent.absolute() if FROZEN else Path(__file__).parent.absolute()
 """ 程序运行路径 """
 VERSION_FILE: Path = APP_PATH / "version.json"
 """ 版本文件路径 """
@@ -42,3 +42,12 @@ UPDATE_EXTRACT_DIR: Path = APP_PATH
 """ 更新解压目录 """
 UPDATED_PATH: Path = UPDATE_EXTRACT_DIR
 """ 更新后的程序路径 """
+LOGO = (
+    '  _____  _____             _    _             _         _\n'
+    ' / ____||  __ \     /\    | |  | |           | |       | |\n'
+    '| (___  | |__) |   /  \   | |  | | _ __    __| |  __ _ | |_   ___  _ __\n'
+    ' \___ \ |  _  /   / /\ \  | |  | || \'_ \  / _` | / _` || __| / _ \| \'__|\n'
+    ' ____) || | \ \  / ____ \ | |__| || |_) || (_| || (_| || |_ |  __/| |\n'
+    '|_____/ |_|  \_\/_/    \_\ \____/ | .__/  \__,_| \__,_| \__| \___||_|\n'
+    '                                  | |\n'
+    '                                  |_|\n')

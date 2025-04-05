@@ -1,34 +1,38 @@
-from .updater_logger import logging
-from .const import (
-    HEADERS, 
+import argparse
+import hashlib
+import json
+import os
+import sys
+from pathlib import Path
+from time import sleep
+from typing import Generator
+from urllib.parse import urlparse
+
+import requests
+from rich.console import Console
+from rich.panel import Panel
+from rich.style import Style
+
+from const import (
+    HEADERS,
     VERSION_FILE,
     UPDATED_PATH,
-    TEMP_DOWNLOAD_FILE, 
-    DOWNLOADING_FILE, 
-    TEMP_DOWNLOAD_DIR, 
+    TEMP_DOWNLOAD_FILE,
+    DOWNLOADING_FILE,
+    TEMP_DOWNLOAD_DIR,
     HASH_URL,
     __VERSION__,
     __AUTHOR__,
-    UPDATE_EXTRACT_DIR,
-    VERSION_URL
+    VERSION_URL, APP_PATH, LOGO
 )
-from .data_models import VersionInfo
-from .process_bar import download_progress_bar
-from .help_beautiful import RichHelpFormatter
-from .decorators import Issue
-from pathlib import Path
-import json
-import requests
-import hashlib
-from rich.console import Console
-import argparse
-from rich.panel import Panel
-from rich.style import Style
-import sys
-import zipfile
-from typing import Generator
-from .exec_hook import set_exechook, ExtractException
-from urllib.parse import urlparse
+from data_models import VersionInfo
+from decorators import Issue
+from exec_hook import set_exechook, ExtractException
+from help_beautiful import RichHelpFormatter
+from process_bar import download_progress_bar
+from updater_logger import logging
+from utils import Castorice
+
 
 class SRAUpdater:
     """
@@ -44,16 +48,11 @@ class SRAUpdater:
         self.console = Console()
         self.__print_logo()
         self.init_version_file()
-        self.proxys = [
-            "https://gitproxy.click/",
-            "https://cdn.moran233.xyz/",
-            "https://gh.llkk.cc/",
-            "https://github.akams.cn/",
-            "https://www.ghproxy.cn/",
-            "https://ghfast.top/"
-        ]
+        self.proxys = []
+        self.get_proxys()
         self.no_proxy = False
         self.verify_ssl = True
+        self.force_update = False
         set_exechook()
 
     @staticmethod
@@ -69,7 +68,8 @@ class SRAUpdater:
         headers["Host"] = parse_result.netloc
         return headers
 
-    def __error_occurred(self, action_desc: str | None, exc: Exception, need_exit: bool = True, no_stack: bool = False) -> None:
+    def __error_occurred(self, action_desc: str | None, exc: Exception, need_exit: bool = True,
+                         no_stack: bool = False) -> None:
         """
         发生异常后打印错误信息。
         """
@@ -84,9 +84,10 @@ class SRAUpdater:
         """
         打印启动logo。
         """
-        # self.console.print(art.text2art("SRAUpdater", font="big"), style=Style(color="magenta"))
+        self.console.print(LOGO, style=Style(color="magenta"))
         self.console.print(f"[bold yellow]SRAUpdater {__VERSION__}[/bold yellow]")
         self.console.print(f"[bold blue]作者：({' '.join(__AUTHOR__)})[/bold blue]")
+        self.console.print(f"当前路径{APP_PATH}")
         self.console.print(f"[bold grey]{'=' * self.console.width}")
 
     def init_version_file(self):
@@ -96,12 +97,26 @@ class SRAUpdater:
         try:
             if not VERSION_FILE.exists():
                 self.logger.info("初始化版本信息...")
-                version_info = {"version": "0.0.0", "resource_version": "0.0.0", "Announcement": ""}
+                version_info = {"version": "0.0.0",
+                                "resource_version": "0.0.0",
+                                "Announcement": "",
+                                "Proxys": [
+                                    "https://gitproxy.click/",
+                                    "https://cdn.moran233.xyz/",
+                                    "https://gh.llkk.cc/",
+                                    "https://github.akams.cn/",
+                                    "https://www.ghproxy.cn/",
+                                    "https://ghfast.top/"
+                                ]}
                 if not VERSION_FILE.exists():
                     with open(VERSION_FILE, "w", encoding="utf-8") as json_file:
                         json.dump(version_info, json_file, indent=4)
         except Exception as e:
             self.__error_occurred("初始化版本信息", e, need_exit=True)
+
+    def get_proxys(self):
+        with open(VERSION_FILE, 'r', encoding='utf-8') as f:
+            self.proxys = json.load(f)['Proxys']
 
     @staticmethod
     def get_current_version() -> VersionInfo:
@@ -148,14 +163,15 @@ class SRAUpdater:
 
         remote_version = version_info.get("version")
         remote_resource_version = version_info.get("resource_version")
-        new_announcement = version_info.get("announcement") if version_info.get("announcement") else version_info.get("Announcement")
+        new_announcement = version_info.get("announcement") if version_info.get("announcement") else version_info.get(
+            "Announcement")
 
         self.logger.info(f"当前版本：{v.version}")
         self.logger.info(f"当前资源版本：{v.resource_version}")
         self.logger.info(f"远程版本：{remote_version}")
         self.logger.info(f"远程资源版本：{remote_resource_version}")
 
-        if remote_version > v.version:
+        if remote_version > v.version or self.force_update:
             self.logger.info(f"发现新版本：{remote_version}")
             self.console.print(f"[bold green]发现新版本：{remote_version}[/bold green]")
             self.console.print(f"[bold blue]更新说明：\n{new_announcement}[/bold blue]")
@@ -164,6 +180,7 @@ class SRAUpdater:
             self.logger.info(f"发现资源更新：{remote_resource_version}")
             self.console.print(f"[bold green]发现资源更新：{remote_resource_version}[/bold green]")
             self.console.print(f"[bold blue]更新说明：\n{version_info.get('resource_announcement')}[/bold blue]")
+            self.integrity_check(confirm=True)
             return ""
         if new_announcement != v.announcement:
             self.update_announcement(new_announcement)
@@ -183,18 +200,19 @@ class SRAUpdater:
             json.dump(version_info, json_file, indent=4, ensure_ascii=False)
             json_file.truncate()
 
-    def __warp_proxy(self, url: str) -> Generator[str, None, None]:
+    def __warp_proxy(self, url: str) -> Generator[str, None, str | None]:
         """
         给下载连接添加代理前缀
         """
-        if not self.no_proxy:
-            for proxy in self.proxys:
-                if isinstance(proxy, str):
-                    self.logger.debug(f"使用代理: {proxy}")
-                    url = f"{proxy}{url}"
-                    yield url
-            self.logger.warning("所有代理都尝试完成")
-        return url # 尝试了所有的代理
+        if self.no_proxy:
+            return url
+        for proxy in self.proxys:
+            if isinstance(proxy, str):
+                self.logger.debug(f"使用代理: {proxy}")
+                url = f"{proxy}{url}"
+                yield url
+        self.logger.warning("所有代理都尝试完成")
+        # 尝试了所有的代理
 
     def download(self, download_url: str) -> None:
         """
@@ -230,28 +248,37 @@ class SRAUpdater:
         except requests.exceptions.SSLError as e:
             self.logger.warning(f"SSL证书验证失败: {e}")
             raise
+        except KeyboardInterrupt:
+            print("下载更新已取消")
+            os.remove(DOWNLOADING_FILE)
+            os.system("pause")
+            sys.exit(0)
 
     @Issue("解压的时候SRAUpdater.exe也会被替换，用于实现更新，但是此进程仍在运行导致PermissionError。", wait_for_look=True)
     def unzip(self):
         """
         解压更新文件。
         """
+        if Castorice.is_process_running("SRA.exe"):
+            Castorice.touch("SRA.exe")
+            sleep(2)
         if TEMP_DOWNLOAD_FILE.exists():
             try:
                 self.logger.info("解压更新文件")
-                with zipfile.ZipFile(TEMP_DOWNLOAD_FILE, 'r') as zip_ref:
-                    zip_ref.extractall(UPDATE_EXTRACT_DIR)
-                TEMP_DOWNLOAD_FILE.unlink()
-                if TEMP_DOWNLOAD_DIR.exists():
-                    TEMP_DOWNLOAD_DIR.rmdir()
-                self.logger.info("解压完成！")
-                self.console.print("[bold green]解压完成！[/bold green]")
+                if not Path.exists(APP_PATH / "tools/7z.exe"):
+                    self.console.print(f"[bold red]解压工具丢失，请手动解压{TEMP_DOWNLOAD_FILE}到当前文件夹[/bold red]")
+                    os.system("pause")
+                    return
+                command = f"'{APP_PATH}/tools/7z' x {TEMP_DOWNLOAD_FILE} -y"
+                cmd = 'cmd.exe /c start "" ' + command
+                Castorice.Popen(cmd, shell=True)
+
             except Exception as e:
                 self.logger.error(f"解压更新时出错: {e}")
                 self.console.print(f"[bold red]解压更新时出错: {e}[/bold red]")
                 self.console.print("[bold cyan] 尝试手动解压覆盖试试？ [bold cyan]")
 
-    def integrity_check(self):
+    def integrity_check(self, confirm: bool = False):
         """
         检查文件完整性。
         """
@@ -259,7 +286,7 @@ class SRAUpdater:
             self.logger.info("检查文件完整性...")
             response = requests.get(HASH_URL, timeout=10)
             saved_hashes = response.json()
-            ## self.logger.debug(saved_hashes)
+            # self.logger.debug(saved_hashes)
         except requests.RequestException as e:
             self.__error_occurred("获取哈希值", e, need_exit=True)
             return
@@ -280,6 +307,10 @@ class SRAUpdater:
         if inconsistent_files:
             self.logger.info(f"{len(inconsistent_files)} 个文件丢失或不是最新的")
             self.console.print(f"[bold yellow]{len(inconsistent_files)} 个文件丢失或不是最新的[/bold yellow]")
+            if not confirm:
+                ans = input("是否开始下载缺失文件？(Y/n)")
+                if ans.strip().lower() == 'n':
+                    return
             self.download_all(inconsistent_files)
         else:
             self.logger.info("所有文件均为最新")
@@ -306,7 +337,7 @@ class SRAUpdater:
                 self.simple_download(f"https://pub-f5eb43d341f347bb9ab8712e19a5eb51.r2.dev/SRA/{file}", file)
             except Exception as e:
                 self.__error_occurred(f"下载 {file} 文件", e)
-    
+
     def display_version(self):
         """
         显示当前版本信息。
@@ -321,7 +352,7 @@ class SRAUpdater:
         panel = Panel(f"{panel_msg}", style=Style(color="green"), title="[bold yellow]版本信息[bold yellow]")
         self.console.print(panel)
 
-    def simple_download(self, url: str, path: str|Path):
+    def simple_download(self, url: str, path: str | Path):
         """
         简单下载文件。
         """
@@ -336,24 +367,24 @@ class SRAUpdater:
             self.logger.warning(f"下载更新时出错: {e}")
 
     @staticmethod
-    def update_with_args() -> None:
+    def launch_with_args() -> None:
         """
-        命令行参数更新。
+        带参数启动。
         """
 
         if sys.platform == "win32":
             if any(arg.startswith('--multiprocessing-fork') for arg in sys.argv):
                 return
-        
+
         parser = argparse.ArgumentParser(
             prog="SRAUpdater",
-            description="星穹铁道助手更新器命令行工具",
+            description="SRA更新器命令行工具",
             formatter_class=RichHelpFormatter
         )
         parser.add_argument("-u", "--url", help="指定文件下载链接")
         # parser.add_argument("-d","--directory", help="The directory where the file was downloaded")
         parser.add_argument("-p", "--proxy", nargs="+", help="代理链接，如果没有则使用默认的内置代理列表")
-        parser.add_argument("-np", "--no-proxy", action="store_true", help="不想使用代理")
+        parser.add_argument("-np", "--no-proxy", action="store_true", help="不使用代理")
         parser.add_argument("-nv", "--no-verify", action="store_true", help="不要进行SSL证书验证")
         parser.add_argument("-v", "--version", action="store_true", help="获取当前版本信息")
         parser.add_argument("-f", "--force", action="store_true", help="强制更新")
@@ -390,6 +421,7 @@ class SRAUpdater:
             updater.unzip()
         else:
             updater.check_for_updates()
+
 
 if __name__ == '__main__':
     sra_updater = SRAUpdater()
