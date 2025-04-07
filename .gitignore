@@ -1,0 +1,12 @@
+__pycache__/
+build/
+dist/
+test/
+*.egg-info/
+*.egg
+*.pyc
+*.pyo
+
+*.png
+*.db
+.vscode/

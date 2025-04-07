@@ -1,4 +1,4 @@
-from _decorator_base import WarningBaseDecorator
+from ._decorator_base import WarningBaseDecorator
 
 class Issue(WarningBaseDecorator):
     """ Decorator for function or class issues """

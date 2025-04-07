@@ -7,13 +7,12 @@ from pathlib import Path
 from time import sleep
 from typing import Generator
 from urllib.parse import urlparse
-
 import requests
-from rich.console import Console
+import rich
 from rich.panel import Panel
 from rich.style import Style
 
-from const import (
+from .const import (
     HEADERS,
     VERSION_FILE,
     UPDATED_PATH,
@@ -23,15 +22,15 @@ from const import (
     HASH_URL,
     __VERSION__,
     __AUTHOR__,
-    VERSION_URL, APP_PATH, LOGO
+    VERSION_URL, APP_PATH, LOGO,
+    SUPPORT_ANSI
 )
-from data_models import VersionInfo
-from decorators import Issue
-from exec_hook import set_exechook, ExtractException
-from help_beautiful import RichHelpFormatter
-from process_bar import download_progress_bar
-from updater_logger import logging
-from utils import Castorice
+from .data_models import VersionInfo
+from .exec_hook import set_exechook, ExtractException
+from .help_beautiful import RichHelpFormatter
+from .process_bar import download_progress_bar
+from .updater_logger import logging
+from .utils import Castorice
 
 
 class SRAUpdater:
@@ -45,7 +44,8 @@ class SRAUpdater:
         self.logger = logging.getLogger(self.__class__.__name__)
         if not self.verbose:
             logging.disable(logging.DEBUG)
-        self.console = Console()
+        self.console = rich.get_console()
+        self.__config_console()
         self.__print_logo()
         self.init_version_file()
         self.proxys = []
@@ -54,6 +54,14 @@ class SRAUpdater:
         self.verify_ssl = True
         self.force_update = False
         set_exechook()
+
+    def __config_console(self) -> None:
+        """
+        配置控制台。
+        """
+        self.console._highlight = False
+        if not SUPPORT_ANSI:
+            self.console.legacy_windows = True
 
     @staticmethod
     def __auto_headers(url: str) -> dict[str, str]:
@@ -254,12 +262,11 @@ class SRAUpdater:
             os.system("pause")
             sys.exit(0)
 
-    @Issue("解压的时候SRAUpdater.exe也会被替换，用于实现更新，但是此进程仍在运行导致PermissionError。", wait_for_look=True)
     def unzip(self):
         """
         解压更新文件。
         """
-        if Castorice.is_process_running("SRA.exe"):
+        if Castorice.look("SRA.exe"):
             Castorice.touch("SRA.exe")
             sleep(2)
         if TEMP_DOWNLOAD_FILE.exists():
@@ -271,7 +278,7 @@ class SRAUpdater:
                     return
                 command = f"'{APP_PATH}/tools/7z' x {TEMP_DOWNLOAD_FILE} -y"
                 cmd = 'cmd.exe /c start "" ' + command
-                Castorice.Popen(cmd, shell=True)
+                Castorice.life(cmd, shell=True)
 
             except Exception as e:
                 self.logger.error(f"解压更新时出错: {e}")
@@ -282,7 +289,7 @@ class SRAUpdater:
         """
         检查文件完整性。
         """
-        if Castorice.is_process_running("SRA.exe"):
+        if Castorice.look("SRA.exe"):
             Castorice.touch("SRA.exe")
         try:
             self.logger.info("检查文件完整性...")

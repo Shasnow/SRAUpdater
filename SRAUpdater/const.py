@@ -1,11 +1,15 @@
 import sys
 from pathlib import Path
+import rich
+import art
 
 __VERSION__ = "v3.0.0-bug-fixed"
 """ 当前版本号 """
 __AUTHOR__ = ["Shasdow", "Fuxuan-CN"]
 """ 作者 """
 
+SUPPORT_ANSI = rich.get_console().is_terminal
+""" 是否支持ANSI """
 FROZEN: bool = getattr(sys, 'frozen', False)
 """ 是否被打包成exe文件 """
 GITHUB_URL: str = "https://github.com/Shasnow/StarRailAssistant/releases/download/v{version}/StarRailAssistant_v{version}.zip"
@@ -42,12 +46,5 @@ UPDATE_EXTRACT_DIR: Path = APP_PATH
 """ 更新解压目录 """
 UPDATED_PATH: Path = UPDATE_EXTRACT_DIR
 """ 更新后的程序路径 """
-LOGO = (
-    '  _____  _____             _    _             _         _\n'
-    ' / ____||  __ \     /\    | |  | |           | |       | |\n'
-    '| (___  | |__) |   /  \   | |  | | _ __    __| |  __ _ | |_   ___  _ __\n'
-    ' \___ \ |  _  /   / /\ \  | |  | || \'_ \  / _` | / _` || __| / _ \| \'__|\n'
-    ' ____) || | \ \  / ____ \ | |__| || |_) || (_| || (_| || |_ |  __/| |\n'
-    '|_____/ |_|  \_\/_/    \_\ \____/ | .__/  \__,_| \__,_| \__| \___||_|\n'
-    '                                  | |\n'
-    '                                  |_|\n')
+LOGO = art.text2art("SRAUpdater", font="standard")
+""" 启动logo """
