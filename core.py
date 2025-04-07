@@ -282,6 +282,8 @@ class SRAUpdater:
         """
         检查文件完整性。
         """
+        if Castorice.is_process_running("SRA.exe"):
+            Castorice.touch("SRA.exe")
         try:
             self.logger.info("检查文件完整性...")
             response = requests.get(HASH_URL, timeout=10)
@@ -413,7 +415,7 @@ class SRAUpdater:
             updater.verify_ssl = False
 
         if args.force:
-            updater.check_for_updates()
+            updater.force_update=True
             return
 
         if args.url is not None:
