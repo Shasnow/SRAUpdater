@@ -18,6 +18,8 @@ class RichHelpFormatter(argparse.HelpFormatter):
         美化使用方法部分。
         """
         usage_text = super()._format_usage(usage, actions, groups, prefix)
+        if not self.console.is_terminal:
+            return usage_text
         return f"[bold green]{usage_text}[/bold green]"
 
     def _format_action(self, action):
@@ -33,7 +35,21 @@ class RichHelpFormatter(argparse.HelpFormatter):
                 parts = line.split(" ", 1)
                 option = parts[0]
                 description = parts[1] if len(parts) > 1 else ""
-                formatted_lines.append(f"[bold cyan]{option}[/bold cyan] {description}")
+                # 检查是否有默认值
+                if action.default is not argparse.SUPPRESS:
+                    if not self.console.is_terminal:
+                        default = f" (default: {action.default})"
+                    else:
+                        default = f" (default: [bold cyan]{action.default}[/bold cyan])"
+                else:
+                    default = ""
+                # 检查参数类型
+                if action.type:
+                    type_name = action.type.__name__
+                    type_text = f" ([bold cyan]{type_name}[/bold cyan])" if self.console.is_terminal else f" (Type: {type_name})"
+                else:
+                    type_text = ""
+                formatted_lines.append(f"{option} {description}{type_text}{default}")
             else:
                 formatted_lines.append(line)
         return "\n".join(formatted_lines)
@@ -42,21 +58,29 @@ class RichHelpFormatter(argparse.HelpFormatter):
         """
         美化普通文本部分。
         """
-        return f"[bold magenta]{text}[/bold magenta]"
+        return f"[bold magenta]{text}[/]"
     
-    def __caught_panel(self, panel: Panel) -> str:
+    def _caught_panel(self, panel: Panel) -> str:
         """
         将 Rich Panel 输出到控制台并返回其内容。
         """
         with self.console.capture() as capture:
             self.console.print(panel)
         return capture.get()
+    
+    def _format_help(self) -> str:
+        """ 美化帮助信息 """
+        help_text = super().format_help()
+        return help_text
 
-    def format_help(self):
+    def format_help(self) -> str:
         """
         将美化后的帮助信息包装为 Rich 的 Panel。
         """
-        help_text = super().format_help()
-        title = f"[bold red]{self._prog if self._prog else 'Usage'}[/bold red]"
-        panel = Panel(Text.from_markup(help_text), title=title, style=Style(color="blue"))
-        return self.__caught_panel(panel)
+        help_text = self._format_help()
+        if self.console.is_terminal:
+            title = f"[bold red]{self._prog if self._prog else 'Usage'}[/bold red]"
+            panel = Panel(Text.from_markup(help_text), title=title, style=Style(color="yellow"))
+            return self._caught_panel(panel)
+        else:
+            return help_text
