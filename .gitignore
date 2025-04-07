@@ -1,12 +1,10 @@
 __pycache__/
 build/
 dist/
-test/
+ignore/
 *.egg-info/
 *.egg
 *.pyc
 *.pyo
-
-*.png
 *.db
 .vscode/
