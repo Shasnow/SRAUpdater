@@ -1,6 +1,6 @@
 """ make argparse help message beautiful """
 import argparse
-from rich.console import Console
+import rich
 from rich.text import Text
 from rich.panel import Panel
 from rich.style import Style
@@ -11,7 +11,7 @@ class RichHelpFormatter(argparse.HelpFormatter):
     """
     def __init__(self, prog, indent_increment=2, max_help_position=30, width=None):
         super().__init__(prog, indent_increment, max_help_position, width)
-        self.console = Console()
+        self.console = rich.get_console()
 
     def _format_usage(self, usage, actions, groups, prefix):
         """

@@ -34,7 +34,7 @@ class Castorice:
             pass
 
     @staticmethod
-    def is_process_running(process_name: str) -> bool:
+    def look(process_name: str) -> bool:
         #既然这样太卜自己再给这两函数起个贴切的名字吧
         """
         Check if there is any running process that contains the given name string.
@@ -55,7 +55,7 @@ class Castorice:
         return False
 
     @staticmethod
-    def Popen(path: str, shell=False) -> bool:
+    def life(path: str, shell=False) -> bool:
         """运行指定exe程序
 
         Args:
