@@ -388,7 +388,7 @@ class SRAUpdater:
         parser = argparse.ArgumentParser(
             prog="SRAUpdater",
             description="SRA更新器命令行工具",
-            formatter_class=RichHelpFormatter
+            # formatter_class=RichHelpFormatter
         )
         parser.add_argument("-u", "--url", help="指定文件下载链接")
         # parser.add_argument("-d","--directory", help="The directory where the file was downloaded")
@@ -423,7 +423,6 @@ class SRAUpdater:
 
         if args.force:
             updater.force_update=True
-            return
 
         if args.url is not None:
             updater.download(args.url)
