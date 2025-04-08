@@ -1,3 +1,4 @@
 requests~=2.32.3
-rich
+rich~=14.0.0
 psutil~=6.0.0
+art~=6.4
