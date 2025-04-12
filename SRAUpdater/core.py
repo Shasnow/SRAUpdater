@@ -27,7 +27,7 @@ from .const import (
 )
 from .data_models import VersionInfo
 from .exec_hook import set_exechook, ExtractException
-from .help_beautiful import RichHelpFormatter
+# from .help_beautiful import RichHelpFormatter
 from .process_bar import download_progress_bar
 from .updater_logger import logging
 from .utils import Castorice
@@ -109,12 +109,12 @@ class SRAUpdater:
                                 "resource_version": "0.0.0",
                                 "Announcement": "",
                                 "Proxys": [
+                                    "https://github.tbedu.top/",
                                     "https://gitproxy.click/",
-                                    "https://cdn.moran233.xyz/",
-                                    "https://gh.llkk.cc/",
                                     "https://github.akams.cn/",
-                                    "https://www.ghproxy.cn/",
-                                    "https://ghfast.top/"
+                                    "https://gh-proxy.ygxz.in/",
+                                    "https://ghps.cc/",
+                                    ""
                                 ]}
                 if not VERSION_FILE.exists():
                     with open(VERSION_FILE, "w", encoding="utf-8") as json_file:
@@ -229,6 +229,8 @@ class SRAUpdater:
         try:
             if not TEMP_DOWNLOAD_DIR.exists():
                 TEMP_DOWNLOAD_DIR.mkdir()
+            if TEMP_DOWNLOAD_FILE.exists():
+                os.remove(TEMP_DOWNLOAD_FILE)
             self.logger.info("下载更新文件")
             response = requests.get(download_url, stream=True, headers=HEADERS, verify=self.verify_ssl)
             response.raise_for_status()
@@ -276,7 +278,7 @@ class SRAUpdater:
                     self.console.print(f"[bold red]解压工具丢失，请手动解压{TEMP_DOWNLOAD_FILE}到当前文件夹[/bold red]")
                     os.system("pause")
                     return
-                command = f"'{APP_PATH}/tools/7z' x {TEMP_DOWNLOAD_FILE} -y"
+                command = f'"{APP_PATH}\\tools\\7z" x {TEMP_DOWNLOAD_FILE} -y'
                 cmd = 'cmd.exe /c start "" ' + command
                 Castorice.life(cmd, shell=True)
 
@@ -289,8 +291,6 @@ class SRAUpdater:
         """
         检查文件完整性。
         """
-        if Castorice.look("SRA.exe"):
-            Castorice.touch("SRA.exe")
         try:
             self.logger.info("检查文件完整性...")
             response = requests.get(HASH_URL, timeout=10)
@@ -320,6 +320,8 @@ class SRAUpdater:
                 ans = input("是否开始下载缺失文件？(Y/n)")
                 if ans.strip().lower() == 'n':
                     return
+            if Castorice.look("SRA.exe"):
+                Castorice.touch("SRA.exe")
             self.download_all(inconsistent_files)
         else:
             self.logger.info("所有文件均为最新")
@@ -422,7 +424,7 @@ class SRAUpdater:
             updater.verify_ssl = False
 
         if args.force:
-            updater.force_update=True
+            updater.force_update = True
 
         if args.url is not None:
             updater.download(args.url)
