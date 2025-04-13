@@ -418,7 +418,7 @@ class SRAUpdater:
             updater.no_proxy = True
 
         if args.proxy:
-            updater.proxys.append(args.proxy)
+            updater.proxys.insert(0,args.proxy)
 
         if args.no_verify:
             updater.verify_ssl = False
