@@ -9,6 +9,7 @@ from typing import Generator
 from urllib.parse import urlparse
 import requests
 import rich
+from rich.progress import track
 from rich.panel import Panel
 from rich.style import Style
 
@@ -345,7 +346,7 @@ class SRAUpdater:
             try:
                 if file.exists():
                     file.unlink()
-                self.simple_download(f"https://pub-f5eb43d341f347bb9ab8712e19a5eb51.r2.dev/SRA/{file}", file)
+                self.simple_download(f"https://pub-f5eb43d341f347bb9ab8712e19a5eb51.r2.dev/SRA/{file.as_posix()}", file)
             except Exception as e:
                 self.__error_occurred(f"下载 {file} 文件", e)
 
@@ -368,11 +369,14 @@ class SRAUpdater:
         简单下载文件。
         """
         try:
+            self.logger.info(f"正在下载 {path} ...")
             response = requests.get(url, stream=True, headers=HEADERS)
             response.raise_for_status()
+            total_size = int(response.headers.get("Content-Length", 0))
             with open(UPDATED_PATH / path, "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192):
+                for chunk in track(response.iter_content(chunk_size=8192), total=total_size / 8192, description=path):
                     f.write(chunk)
+
             self.logger.info(f"{path} 下载完成")
         except requests.RequestException as e:
             self.logger.warning(f"下载更新时出错: {e}")
@@ -418,7 +422,7 @@ class SRAUpdater:
             updater.no_proxy = True
 
         if args.proxy:
-            updater.proxys.insert(0,args.proxy)
+            updater.proxys.insert(0, args.proxy)
 
         if args.no_verify:
             updater.verify_ssl = False
