@@ -323,6 +323,7 @@ class SRAUpdater:
                     return
             if Castorice.look("SRA.exe"):
                 Castorice.touch("SRA.exe")
+                sleep(2)
             self.download_all(inconsistent_files)
         else:
             self.logger.info("所有文件均为最新")
