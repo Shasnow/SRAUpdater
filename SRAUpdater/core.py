@@ -9,6 +9,7 @@ from typing import Generator
 from urllib.parse import urlparse
 import requests
 import rich
+from rich.progress import track
 from rich.panel import Panel
 from rich.style import Style
 
@@ -109,12 +110,12 @@ class SRAUpdater:
                                 "resource_version": "0.0.0",
                                 "Announcement": "",
                                 "Proxys": [
+                                    "https://github.tbedu.top/",
                                     "https://gitproxy.click/",
-                                    "https://cdn.moran233.xyz/",
-                                    "https://gh.llkk.cc/",
                                     "https://github.akams.cn/",
-                                    "https://www.ghproxy.cn/",
-                                    "https://ghfast.top/"
+                                    "https://gh-proxy.ygxz.in/",
+                                    "https://ghps.cc/",
+                                    ""
                                 ]}
                 if not VERSION_FILE.exists():
                     with open(VERSION_FILE, "w", encoding="utf-8") as json_file:
@@ -229,6 +230,8 @@ class SRAUpdater:
         try:
             if not TEMP_DOWNLOAD_DIR.exists():
                 TEMP_DOWNLOAD_DIR.mkdir()
+            if TEMP_DOWNLOAD_FILE.exists():
+                os.remove(TEMP_DOWNLOAD_FILE)
             self.logger.info("下载更新文件")
             response = requests.get(download_url, stream=True, headers=HEADERS, verify=self.verify_ssl)
             response.raise_for_status()
@@ -276,7 +279,7 @@ class SRAUpdater:
                     self.console.print(f"[bold red]解压工具丢失，请手动解压{TEMP_DOWNLOAD_FILE}到当前文件夹[/bold red]")
                     os.system("pause")
                     return
-                command = f"'{APP_PATH}/tools/7z' x {TEMP_DOWNLOAD_FILE} -y"
+                command = f'"{APP_PATH}\\tools\\7z" x {TEMP_DOWNLOAD_FILE} -y'
                 cmd = 'cmd.exe /c start "" ' + command
                 Castorice.life(cmd, shell=True)
 
@@ -289,8 +292,6 @@ class SRAUpdater:
         """
         检查文件完整性。
         """
-        if Castorice.look("SRA.exe"):
-            Castorice.touch("SRA.exe")
         try:
             self.logger.info("检查文件完整性...")
             response = requests.get(HASH_URL, timeout=10)
@@ -320,6 +321,9 @@ class SRAUpdater:
                 ans = input("是否开始下载缺失文件？(Y/n)")
                 if ans.strip().lower() == 'n':
                     return
+            if Castorice.look("SRA.exe"):
+                Castorice.touch("SRA.exe")
+                sleep(2)
             self.download_all(inconsistent_files)
         else:
             self.logger.info("所有文件均为最新")
@@ -343,7 +347,7 @@ class SRAUpdater:
             try:
                 if file.exists():
                     file.unlink()
-                self.simple_download(f"https://pub-f5eb43d341f347bb9ab8712e19a5eb51.r2.dev/SRA/{file}", file)
+                self.simple_download(f"https://pub-f5eb43d341f347bb9ab8712e19a5eb51.r2.dev/SRA/{file.as_posix()}", file)
             except Exception as e:
                 self.__error_occurred(f"下载 {file} 文件", e)
 
@@ -366,11 +370,14 @@ class SRAUpdater:
         简单下载文件。
         """
         try:
+            self.logger.info(f"正在下载 {path} ...")
             response = requests.get(url, stream=True, headers=HEADERS)
             response.raise_for_status()
+            total_size = int(response.headers.get("Content-Length", 0))
             with open(UPDATED_PATH / path, "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192):
+                for chunk in track(response.iter_content(chunk_size=8192), total=total_size / 8192, description=path):
                     f.write(chunk)
+
             self.logger.info(f"{path} 下载完成")
         except requests.RequestException as e:
             self.logger.warning(f"下载更新时出错: {e}")
@@ -416,14 +423,13 @@ class SRAUpdater:
             updater.no_proxy = True
 
         if args.proxy:
-            updater.proxys.append(args.proxy)
+            updater.proxys.insert(0, args.proxy)
 
         if args.no_verify:
             updater.verify_ssl = False
 
         if args.force:
-            updater.force_update=True
-            return
+            updater.force_update = True
 
         if args.url is not None:
             updater.download(args.url)

@@ -12,6 +12,7 @@ class RichHelpFormatter(argparse.HelpFormatter):
     def __init__(self, prog, indent_increment=2, max_help_position=30, width=None):
         super().__init__(prog, indent_increment, max_help_position, width)
         self.console = rich.get_console()
+        self.console.legacy_windows = True # 解决 Windows 控制台不支持 ANSI 转义序列的问题
 
     def _format_usage(self, usage, actions, groups, prefix):
         """

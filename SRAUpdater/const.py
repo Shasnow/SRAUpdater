@@ -5,7 +5,7 @@ import art
 
 __VERSION__ = "v3.0.0-bug-fixed"
 """ 当前版本号 """
-__AUTHOR__ = ["Shasdow", "Fuxuan-CN"]
+__AUTHOR__ = ["Shasnow", "Fuxuan-CN"]
 """ 作者 """
 
 SUPPORT_ANSI = rich.get_console().is_terminal
