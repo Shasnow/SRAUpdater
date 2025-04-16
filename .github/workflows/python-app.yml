@@ -35,7 +35,7 @@ jobs:
     steps:
       - name: Repo Check
         run: |
-          if [[ "$GITHUB_REPOSITORY" != "Shasnow/StarRailAssistant" ]]; then
+          if [[ "$GITHUB_REPOSITORY" != "Shasnow/SRAUpdater" ]]; then
             echo "When forking this repository to make your own builds, you have to adjust this check."
             exit 1
           fi
