@@ -8,8 +8,8 @@ __VERSION__ = "v3.0.0-bug-fixed"
 __AUTHOR__ = ["Shasnow", "Fuxuan-CN"]
 """ 作者 """
 
-SUPPORT_ANSI = rich.get_console().is_terminal
-""" 是否支持ANSI """
+GLOBAL_CONSOLE = rich.get_console()
+""" 全局控制台 """
 FROZEN: bool = getattr(sys, 'frozen', False)
 """ 是否被打包成exe文件 """
 GITHUB_URL: str = "https://github.com/Shasnow/StarRailAssistant/releases/download/v{version}/StarRailAssistant_v{version}.zip"
