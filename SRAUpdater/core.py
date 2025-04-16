@@ -8,6 +8,7 @@ from time import sleep
 from typing import Generator
 from urllib.parse import urlparse
 import requests
+from .help_beautiful import RichHelpFormatter
 from rich.progress import track
 from rich.panel import Panel
 from rich.style import Style
@@ -27,7 +28,7 @@ from .const import (
 )
 from .data_models import VersionInfo
 from .exec_hook import set_exechook, ExtractException
-from .help_beautiful import RichHelpFormatter
+# from .help_beautiful import RichHelpFormatter
 from .process_bar import download_progress_bar
 from .updater_logger import logging
 from .utils import Castorice
