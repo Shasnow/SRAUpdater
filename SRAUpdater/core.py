@@ -8,7 +8,6 @@ from time import sleep
 from typing import Generator
 from urllib.parse import urlparse
 import requests
-import rich
 from rich.progress import track
 from rich.panel import Panel
 from rich.style import Style
@@ -24,7 +23,7 @@ from .const import (
     __VERSION__,
     __AUTHOR__,
     VERSION_URL, APP_PATH, LOGO,
-    SUPPORT_ANSI
+    GLOBAL_CONSOLE
 )
 from .data_models import VersionInfo
 from .exec_hook import set_exechook, ExtractException
@@ -45,7 +44,7 @@ class SRAUpdater:
         self.logger = logging.getLogger(self.__class__.__name__)
         if not self.verbose:
             logging.disable(logging.DEBUG)
-        self.console = rich.get_console()
+        self.console = GLOBAL_CONSOLE
         self.__config_console()
         self.__print_logo()
         self.init_version_file()
@@ -61,8 +60,7 @@ class SRAUpdater:
         配置控制台。
         """
         self.console._highlight = False
-        if not SUPPORT_ANSI:
-            self.console.legacy_windows = True
+        self.console.legacy_windows = True
 
     @staticmethod
     def __auto_headers(url: str) -> dict[str, str]:
