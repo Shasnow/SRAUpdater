@@ -254,7 +254,7 @@ class SRAUpdater:
                 f"[bold green]发现资源更新：{remote_resource_version}[/bold green]"
             )
             self.console.print(
-                f"[bold blue]更新说明：\n{resource_version_info["data"]["release_note"]}[/bold blue]"
+                f"[bold blue]更新说明：\n{resource_version_info['data']['release_note']}[/bold blue]"
             )
 
             if MIRROR_CHYAN_CDK:
@@ -389,7 +389,7 @@ class SRAUpdater:
                     )
                     os.system("pause")
                     return
-                command = f'"{APP_PATH}\\tools\\7z" x {TEMP_DOWNLOAD_FILE} -y'
+                command = f'"{APP_PATH}\\tools\\7z" x "{TEMP_DOWNLOAD_FILE}" -y'
                 cmd = 'cmd.exe /c start "" ' + command
                 Castorice.life(cmd, shell=True)
 
@@ -495,6 +495,9 @@ class SRAUpdater:
             response = requests.get(url, stream=True, headers=HEADERS)
             response.raise_for_status()
             total_size = int(response.headers.get("Content-Length", 0))
+            dir_name=os.path.dirname(UPDATED_PATH / path)
+            if not os.path.exists(dir_name):
+                os.makedirs(dir_name)
             with open(UPDATED_PATH / path, "wb") as f:
                 for chunk in track(
                     response.iter_content(chunk_size=8192),
