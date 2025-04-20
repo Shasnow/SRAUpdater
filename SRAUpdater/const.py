@@ -6,7 +6,7 @@ from pathlib import Path
 import rich
 import art
 
-__VERSION__ = "v3.0.0-beta.1"
+__VERSION__ = "v3.1.0-beta.1"
 """ 当前版本号 """
 __AUTHOR__ = ["Shasnow", "Fuxuan-CN", "DLmaster_361"]
 """ 作者 """
@@ -43,10 +43,10 @@ RESOURCE_VERSION_URL: str = (
     "https://mirrorchyan.com/api/resources/StarRailAssistantResource/latest?current_version={Version}&cdk={CDK}&user_agent=SRAUpdater&channel={Channel}"
 )
 """ 资源文件版本号获取地址 """
-RESOURCE_DIR: Path = APP_PATH / "data"
+RESOURCE_DIR: Path = APP_PATH / "data" # 疑似无用
 """ 资源文件目录 """
-if (APP_PATH / "data/config.json").exists():
-    with (APP_PATH / "data/config.json").open(mode="r", encoding="utf-8") as f:
+if (APP_PATH / "data/globals.json").exists():
+    with (APP_PATH / "data/globals.json").open(mode="r", encoding="utf-8") as f:
         config = json.load(f)
     if "Settings" in config and "mirrorchyanCDK" in config["Settings"]:
         _MIRROR_CHYAN_CDK = (
