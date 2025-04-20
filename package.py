@@ -3,7 +3,7 @@ import shutil
 
 if __name__ == "__main__":
 
-    os.system("pyinstaller --onefile SRAUpdater/__main__.py -n SRAUpdater")
+    os.system("pyinstaller -i=SRAicon.ico --onefile SRAUpdater/__main__.py -n SRAUpdater")
 
     shutil.copytree("SRAUpdater/tools", "dist/tools", dirs_exist_ok=True)
 
