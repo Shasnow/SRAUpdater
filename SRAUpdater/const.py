@@ -43,7 +43,7 @@ RESOURCE_VERSION_URL: str = (
     "https://mirrorchyan.com/api/resources/StarRailAssistantResource/latest?current_version={Version}&cdk={CDK}&user_agent=SRAUpdater&channel={Channel}"
 )
 """ 资源文件版本号获取地址 """
-RESOURCE_DIR: Path = APP_PATH / "data" # 疑似无用
+RESOURCE_DIR: Path = APP_PATH / "data"  # 疑似无用
 """ 资源文件目录 """
 if (APP_PATH / "data/globals.json").exists():
     with (APP_PATH / "data/globals.json").open(mode="r", encoding="utf-8") as f:
@@ -72,7 +72,7 @@ ERROR_REMARK_DICT: dict = {
     7002: "填入的 CDK 错误",
     7003: "填入的 CDK 今日下载次数已达上限",
     7004: "填入的 CDK 类型和待下载的资源不匹配",
-    7005: "填入的 CDK 不合法",
+    7005: "填入的 CDK 已被封禁",
     8001: "对应架构和系统下的资源不存在",
     8002: "错误的系统参数",
     8003: "错误的架构参数",
