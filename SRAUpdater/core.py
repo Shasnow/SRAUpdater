@@ -462,7 +462,7 @@ class SRAUpdater:
                 if file.exists():
                     file.unlink()
                 self.simple_download(
-                    f"https://pub-f5eb43d341f347bb9ab8712e19a5eb51.r2.dev/SRA/{file.as_posix()}",
+                    f"https://resource.starrailassistant.top/SRA/{file.as_posix()}",
                     file,
                 )
             except Exception as e:
