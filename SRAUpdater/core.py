@@ -30,7 +30,7 @@ from .const import (
     LOGO,
     GLOBAL_CONSOLE,
     MIRROR_CHYAN_CDK,
-    ERROR_REMARK_DICT, ANNOUNCEMENT_URL,
+    ERROR_REMARK_DICT, ANNOUNCEMENT_URL, API_URL,
 )
 from .data_models import VersionInfo
 from .exec_hook import set_exechook, ExtractException
@@ -84,11 +84,11 @@ class SRAUpdater:
         return headers
 
     def __error_occurred(
-        self,
-        action_desc: str | None,
-        exc: Exception,
-        need_exit: bool = True,
-        no_stack: bool = False,
+            self,
+            action_desc: str | None,
+            exc: Exception,
+            need_exit: bool = True,
+            no_stack: bool = False,
     ) -> None:
         """
         发生异常后打印错误信息。
@@ -122,11 +122,7 @@ class SRAUpdater:
                     "resource_version": "0.0.0",
                     "Announcement": "",
                     "Proxys": [
-                        "https://github.tbedu.top/",
-                        "https://gitproxy.click/",
-                        "https://github.akams.cn/",
-                        "https://gh-proxy.ygxz.in/",
-                        "https://ghps.cc/",
+                        "https://gh-proxy.com/",
                         "",
                     ],
                 }
@@ -166,8 +162,9 @@ class SRAUpdater:
                     try:
                         self.download(warped_url)
                         break
-                    except requests.exceptions.RequestException as e:
-                        self.logger.warning(f"链接失败: {e}，尝试下一个代理...")
+                    except Exception as e:
+                        self.logger.warning(f"下载失败: {e}，尝试下一个代理...")
+                self.hash_check()
                 self.unzip()
         except Exception as e:
             self.__error_occurred("检查并更新", e)
@@ -208,8 +205,8 @@ class SRAUpdater:
         self.logger.info(f"远程资源版本：{remote_resource_version}")
 
         if (
-            version.parse(remote_version) > version.parse(v.version)
-            or self.force_update
+                version.parse(remote_version) > version.parse(v.version)
+                or self.force_update
         ):
             self.logger.info(f"发现新版本：{remote_version}")
             self.console.print(f"[bold green]发现新版本：{remote_version}[/bold green]")
@@ -229,10 +226,10 @@ class SRAUpdater:
                 if info["code"] == 0:
 
                     with requests.get(
-                        info["data"]["url"],
-                        allow_redirects=True,
-                        timeout=10,
-                        stream=True,
+                            info["data"]["url"],
+                            allow_redirects=True,
+                            timeout=10,
+                            stream=True,
                     ) as response:
                         if response.status_code == 200:
                             return response.url
@@ -240,7 +237,7 @@ class SRAUpdater:
                 else:
 
                     self.console.print(
-                        f"[bold red]Mirror酱获取更新链接失败: {ERROR_REMARK_DICT[info['code']]if info['code'] in ERROR_REMARK_DICT else info['msg']}，转用通用方法更新[/bold red]"
+                        f"[bold red]Mirror酱获取更新链接失败: {ERROR_REMARK_DICT[info['code']] if info['code'] in ERROR_REMARK_DICT else info['msg']}，转用通用方法更新[/bold red]"
                     )
                     self.if_use_mirrorchyan = False
                     return GITHUB_URL.format(version=remote_version)
@@ -274,10 +271,10 @@ class SRAUpdater:
                 if info["code"] == 0:
 
                     with requests.get(
-                        info["data"]["url"],
-                        allow_redirects=True,
-                        timeout=10,
-                        stream=True,
+                            info["data"]["url"],
+                            allow_redirects=True,
+                            timeout=10,
+                            stream=True,
                     ) as response:
                         if response.status_code == 200:
                             return response.url
@@ -285,7 +282,7 @@ class SRAUpdater:
                 else:
 
                     self.console.print(
-                        f"[bold red]Mirror酱获取更新链接失败: {ERROR_REMARK_DICT[info['code']]if info['code'] in ERROR_REMARK_DICT else info['msg']}，转用通用方法更新[/bold red]"
+                        f"[bold red]Mirror酱获取更新链接失败: {ERROR_REMARK_DICT[info['code']] if info['code'] in ERROR_REMARK_DICT else info['msg']}，转用通用方法更新[/bold red]"
                     )
                     self.if_use_mirrorchyan = False
                     self.integrity_check(confirm=True)
@@ -306,8 +303,8 @@ class SRAUpdater:
         """
         self.logger.info("更新公告信息")
         try:
-            announcement=requests.get(ANNOUNCEMENT_URL,timeout=self.timeout)
-            announcement=announcement.json()
+            announcement = requests.get(ANNOUNCEMENT_URL, timeout=self.timeout, verify=self.verify_ssl)
+            announcement = announcement.json()
         except requests.RequestException as e:
             self.__error_occurred("获取公告信息", e, need_exit=True)
             return
@@ -330,9 +327,9 @@ class SRAUpdater:
         for proxy in self.proxys:
             if isinstance(proxy, str):
                 self.logger.debug(f"使用代理: {proxy}")
-                url = f"{proxy}{url}"
-                yield url
+                yield f"{proxy}{url}"
         self.logger.warning("所有代理都尝试完成")
+        return None
         # 尝试了所有的代理
 
     def download(self, download_url: str) -> None:
@@ -369,7 +366,7 @@ class SRAUpdater:
             self.logger.info("下载完成！")
             self.console.print("[bold green]下载完成！[/bold green]")
         except requests.RequestException as e:
-            self.__error_occurred("下载更新文件", e)
+            raise
         except requests.exceptions.SSLError as e:
             self.logger.warning(f"SSL证书验证失败: {e}")
             raise
@@ -458,6 +455,22 @@ class SRAUpdater:
             data = f.read()
             return hash_algo(data).hexdigest()
 
+    def hash_check(self):
+        """
+        检查下载文件的哈希值。
+        """
+        self.logger.info("校验文件哈希...")
+        api = requests.get(API_URL, timeout=self.timeout, verify=self.verify_ssl)
+        api=api.json()
+        download_hash=self.hash_calculate(TEMP_DOWNLOAD_FILE)
+        if download_hash==api["sha256"]:
+            self.logger.info("通过")
+            self.console.print("[bold green]校验通过[/bold green]")
+        else:
+            self.logger.warning("哈希值不一致")
+            self.console.print("[bold red]哈希值不一致[/bold red]")
+            raise ValueError("哈希校验失败! ")
+
     def download_all(self, filelist: list[Path]):
         """
         下载所有丢失或不一致的文件。
@@ -501,14 +514,14 @@ class SRAUpdater:
             response = requests.get(url, stream=True, headers=HEADERS)
             response.raise_for_status()
             total_size = int(response.headers.get("Content-Length", 0))
-            dir_name=os.path.dirname(UPDATED_PATH / path)
+            dir_name = os.path.dirname(UPDATED_PATH / path)
             if not os.path.exists(dir_name):
                 os.makedirs(dir_name)
             with open(UPDATED_PATH / path, "wb") as f:
                 for chunk in track(
-                    response.iter_content(chunk_size=8192),
-                    total=total_size / 8192,
-                    description=path,
+                        response.iter_content(chunk_size=8192),
+                        total=total_size / 8192,
+                        description=path,
                 ):
                     f.write(chunk)
 

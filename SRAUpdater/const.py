@@ -6,7 +6,7 @@ from pathlib import Path
 import rich
 import art
 
-__VERSION__ = "v3.3.0"
+__VERSION__ = "v3.4.0"
 """ 当前版本号 """
 __AUTHOR__ = ["Shasnow", "Fuxuan-CN", "DLmaster_361"]
 """ 作者 """
@@ -82,6 +82,9 @@ ERROR_REMARK_DICT: dict = {
 HASH_URL: str = "https://gitee.com/yukikage/sraresource/raw/main/SRA/hash.json"
 """ hash文件下载地址 """
 ANNOUNCEMENT_URL: str = "https://gitee.com/yukikage/sraresource/raw/main/SRA/announcement.json"
+""" 公告文件下载地址 """
+API_URL: str = "https://gitee.com/yukikage/sraresource/raw/main/SRA/api.json"
+""" api文件下载地址 """
 HASH_FILE: Path = APP_PATH / "data/hash.json"
 """ hash文件路径 """
 TEMP_DOWNLOAD_DIR: Path = APP_PATH / "temp"
