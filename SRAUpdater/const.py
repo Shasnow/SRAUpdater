@@ -81,6 +81,7 @@ ERROR_REMARK_DICT: dict = {
 """ 错误码字典 """
 HASH_URL: str = "https://gitee.com/yukikage/sraresource/raw/main/SRA/hash.json"
 """ hash文件下载地址 """
+ANNOUNCEMENT_URL: str = "https://gitee.com/yukikage/sraresource/raw/main/SRA/announcement.json"
 HASH_FILE: Path = APP_PATH / "data/hash.json"
 """ hash文件路径 """
 TEMP_DOWNLOAD_DIR: Path = APP_PATH / "temp"

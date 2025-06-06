@@ -30,7 +30,7 @@ from .const import (
     LOGO,
     GLOBAL_CONSOLE,
     MIRROR_CHYAN_CDK,
-    ERROR_REMARK_DICT,
+    ERROR_REMARK_DICT, ANNOUNCEMENT_URL,
 )
 from .data_models import VersionInfo
 from .exec_hook import set_exechook, ExtractException
@@ -159,6 +159,7 @@ class SRAUpdater:
         self.logger.info("检查版本信息...")
         version = self.get_current_version()
         try:
+            self.update_announcement()
             url = self.version_check(version)
             if url:
                 for warped_url in self.__warp_proxy(url):
@@ -295,21 +296,26 @@ class SRAUpdater:
                 self.integrity_check(confirm=True)
                 return ""
 
-        if new_announcement != v.announcement:
-            self.update_announcement(new_announcement)
-
         self.logger.info("已经是最新版本")
         self.console.print("[bold green]已经是最新版本[/bold green]")
         return ""
 
-    @staticmethod
-    def update_announcement(new_announcement: str):
+    def update_announcement(self):
         """
         更新公告信息。
         """
+        self.logger.info("更新公告信息")
+        try:
+            announcement=requests.get(ANNOUNCEMENT_URL,timeout=self.timeout)
+            announcement=announcement.json()
+        except requests.RequestException as e:
+            self.__error_occurred("获取公告信息", e, need_exit=True)
+            return
         with open(VERSION_FILE, "r+", encoding="utf-8") as json_file:
             version_info = json.load(json_file)
-            version_info["Announcement"] = new_announcement
+            version_info["announcement"] = announcement["announcement"]
+            version_info["Announcement"] = announcement["Announcement"]
+            version_info["Proxys"] = announcement["Proxys"]
             json_file.seek(0)
             json.dump(version_info, json_file, indent=4, ensure_ascii=False)
             json_file.truncate()
