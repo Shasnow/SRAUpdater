@@ -310,9 +310,9 @@ class SRAUpdater:
             return
         with open(VERSION_FILE, "r+", encoding="utf-8") as json_file:
             version_info = json.load(json_file)
-            version_info["announcement"] = announcement["announcement"]
-            version_info["Announcement"] = announcement["Announcement"]
-            version_info["Proxys"] = announcement["Proxys"]
+            version_info["announcement"] = announcement.get("announcement", "")
+            version_info["Announcement"] = announcement.get("Announcement", "")
+            version_info["Proxys"] = announcement.get("Proxys", "")
             json_file.seek(0)
             json.dump(version_info, json_file, indent=4, ensure_ascii=False)
             json_file.truncate()
