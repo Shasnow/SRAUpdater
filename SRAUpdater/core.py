@@ -164,7 +164,6 @@ class SRAUpdater:
                         break
                     except Exception as e:
                         self.logger.warning(f"下载失败: {e}，尝试下一个代理...")
-                self.hash_check()
                 self.unzip()
         except Exception as e:
             self.__error_occurred("检查并更新", e)
@@ -306,7 +305,7 @@ class SRAUpdater:
             announcement = requests.get(ANNOUNCEMENT_URL, timeout=self.timeout, verify=self.verify_ssl)
             announcement = announcement.json()
         except requests.RequestException as e:
-            self.__error_occurred("获取公告信息", e, need_exit=True)
+            self.__error_occurred("获取公告信息", e, need_exit=False)
             return
         with open(VERSION_FILE, "r+", encoding="utf-8") as json_file:
             version_info = json.load(json_file)
@@ -340,6 +339,9 @@ class SRAUpdater:
             if not TEMP_DOWNLOAD_DIR.exists():
                 TEMP_DOWNLOAD_DIR.mkdir()
             if TEMP_DOWNLOAD_FILE.exists():
+                self.logger.info("检测到已存在的临时下载文件，开始校验哈希值")
+                if self.hash_check():
+                    return None
                 os.remove(TEMP_DOWNLOAD_FILE)
             self.logger.info("下载更新文件")
             response = requests.get(
@@ -365,6 +367,8 @@ class SRAUpdater:
             DOWNLOADING_FILE.rename(TEMP_DOWNLOAD_FILE)
             self.logger.info("下载完成！")
             self.console.print("[bold green]下载完成！[/bold green]")
+            if not self.hash_check():
+                raise ValueError("下载文件哈希校验失败")
         except requests.RequestException as e:
             raise
         except requests.exceptions.SSLError as e:
@@ -372,7 +376,8 @@ class SRAUpdater:
             raise
         except KeyboardInterrupt:
             print("下载更新已取消")
-            os.remove(DOWNLOADING_FILE)
+            if Path.exists(DOWNLOADING_FILE):
+                os.remove(DOWNLOADING_FILE)
             os.system("pause")
             sys.exit(0)
 
@@ -466,10 +471,11 @@ class SRAUpdater:
         if download_hash==api["sha256"]:
             self.logger.info("通过")
             self.console.print("[bold green]校验通过[/bold green]")
+            return True
         else:
             self.logger.warning("哈希值不一致")
             self.console.print("[bold red]哈希值不一致[/bold red]")
-            raise ValueError("哈希校验失败! ")
+            return False
 
     def download_all(self, filelist: list[Path]):
         """
