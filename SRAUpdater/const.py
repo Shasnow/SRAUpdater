@@ -6,7 +6,7 @@ from pathlib import Path
 import rich
 import art
 
-__VERSION__ = "v3.5.0"
+__VERSION__ = "v3.6.0"
 """ 当前版本号 """
 __AUTHOR__ = ["Shasnow", "Fuxuan-CN", "DLmaster_361"]
 """ 作者 """

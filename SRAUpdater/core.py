@@ -120,7 +120,7 @@ class SRAUpdater:
                 version_info = {
                     "version": "0.0.0",
                     "resource_version": "0.0.0",
-                    "Announcement": "",
+                    "Announcement": [],
                     "Proxys": [
                         "https://gh-proxy.com/",
                         "",
@@ -309,8 +309,7 @@ class SRAUpdater:
             return
         with open(VERSION_FILE, "r+", encoding="utf-8") as json_file:
             version_info = json.load(json_file)
-            version_info["announcement"] = announcement.get("announcement", "")
-            version_info["Announcement"] = announcement.get("Announcement", "")
+            version_info["Announcement"] = announcement.get("Announcement", [])
             version_info["Proxys"] = announcement.get("Proxys", "")
             json_file.seek(0)
             json.dump(version_info, json_file, indent=4, ensure_ascii=False)
