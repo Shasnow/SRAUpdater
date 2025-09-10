@@ -6,7 +6,7 @@ from pathlib import Path
 import rich
 import art
 
-__VERSION__ = "v3.6.0"
+__VERSION__ = "v3.7.0"
 """ 当前版本号 """
 __AUTHOR__ = ["Shasnow", "Fuxuan-CN", "DLmaster_361"]
 """ 作者 """
@@ -48,16 +48,16 @@ RESOURCE_DIR: Path = APP_PATH / "data"  # 疑似无用
 if (APP_PATH / "data/globals.json").exists():
     with (APP_PATH / "data/globals.json").open(mode="r", encoding="utf-8") as f:
         config = json.load(f)
-    if "Settings" in config and "mirrorchyanCDK" in config["Settings"]:
+    if "mirrorchyanCDK" in config:
         _MIRROR_CHYAN_CDK = (
             win32crypt.CryptUnprotectData(
-                base64.b64decode(config["Settings"]["mirrorchyanCDK"]),
+                base64.b64decode(config["mirrorchyanCDK"]),
                 None,
                 None,
                 None,
                 0,
             )[1].decode("utf-8")
-            if config["Settings"]["mirrorchyanCDK"]
+            if config["mirrorchyanCDK"]
             else ""
         )
     else:
