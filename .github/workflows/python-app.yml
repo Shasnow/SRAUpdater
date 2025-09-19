@@ -16,7 +16,7 @@
 
 #   yukikage@qq.com
 
-name: Build StarRailAssistant
+name: Build SRAUpdater
 
 on:
   push:
