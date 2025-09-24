@@ -1,4 +1,5 @@
 import asyncio
+import json
 import sys
 import time
 from datetime import datetime
@@ -19,7 +20,7 @@ from rich.prompt import Prompt
 from rich.table import Table
 
 from src import settings
-from src.const import APP_PATH, VERSION, TEMP_DOWNLOAD_FILE, HASH_URL, ERROR_REMARK_DICT
+from src.const import APP_PATH, VERSION, TEMP_DOWNLOAD_FILE, HASH_URL, ERROR_REMARK_DICT, ANNOUNCEMENT_URL
 from src.util import (
     get_local_version, download_update_async, get_remote_version,
     hash_check, Castorice, get, hash_calculate, download_file_async
@@ -371,6 +372,7 @@ class SRACLI:
         self.get_local_version()
         has_new_version = await self._get_remote_version()
         if not has_new_version:
+            await self.update_announcement()
             return
 
         # 2. 预检查（已下载包校验）
@@ -455,3 +457,26 @@ class SRACLI:
             elif choice == "3":
                 console.print("[bold green]✅ 配置已保存，退出管理[/bold green]")
                 break
+
+    async def update_announcement(self):
+        """
+        更新公告信息。
+        """
+        console.print("[bold blue]📢 更新公告信息[/bold blue]")
+        try:
+            announcement = await get(ANNOUNCEMENT_URL)
+            with open("version.json", "r+", encoding="utf-8") as json_file:
+                version_info = json.load(json_file)
+                version_info["Announcement"] = announcement.get("Announcement", [])
+
+                version_info["Proxys"] = announcement.get("Proxys", "")
+                json_file.seek(0)
+                json.dump(version_info, json_file, indent=4, ensure_ascii=False)
+                json_file.truncate()
+            console.print("[bold green]✅ 公告信息已更新[/bold green]")
+        except Exception as e:
+            console.print("[bold red]❌ 获取公告信息失败:[/bold red] {str(e)}")
+            return
+
+
+

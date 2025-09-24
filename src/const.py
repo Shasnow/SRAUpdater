@@ -10,6 +10,7 @@ GITHUB_URL: str = (
 )
 API_URL: str = "https://gitee.com/yukikage/sraresource/raw/main/SRA/api.json"
 HASH_URL: str = "https://gitee.com/yukikage/sraresource/raw/main/SRA/hash.json"
+ANNOUNCEMENT_URL: str = "https://gitee.com/yukikage/sraresource/raw/main/SRA/announcement.json"
 VERSION_URL = "https://mirrorchyan.com/api/resources/StarRailAssistant/latest?current_version=v{version}&cdk={cdk}&user_agent=SRAUpdater&channel={channel}"
 TEMP_DOWNLOAD_DIR: Path = APP_PATH / "temp"
 """ 下载临时目录 """
