@@ -103,8 +103,11 @@ async def main(args):
 
 if __name__ == '__main__':
     args=parse_cli_args()
-    if args.command is not None:
-        asyncio.run(main(args))
-    else:
-        app = SRAUpdaterApp()
-        app.run()
+    try:
+        if args.command is not None:
+            asyncio.run(main(args))
+        else:
+            app = SRAUpdaterApp()
+            app.run()
+    except KeyboardInterrupt:
+        pass
