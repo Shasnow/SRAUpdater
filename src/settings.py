@@ -26,7 +26,7 @@ def get_mirrorchyan_cdk() -> str:
     try:
         with open('data/globals.json', 'r', encoding='utf-8') as f:
             config = json.load(f)
-        cdk = config.get('mirrorchyan_cdk')
+        cdk = config.get('mirrorchyanCDK','')
         return encryption.win_decryptor(cdk)
     except KeyError:
         return temp_settings.mirrorchyan_cdk
